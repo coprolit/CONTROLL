@@ -5,6 +5,17 @@
 (function() {
     "use strict";
 
+    /*
+    1. check host adapter radio is powered on
+        else: alert user to turn on bt radio
+    2. check known/paired devices on adapter for Sphero
+        - else search
+            - alert user to turn on Sphero
+    3. check if Sphero is connected
+        - else connect
+    4. broadcast 'connection:on' to app.
+     */
+
     var powered = false,
         socketId = 0,
         device = 0,
@@ -12,7 +23,7 @@
 
     // Obtaining adapter state
     chrome.bluetooth.getAdapterState(function(adapter) {
-        console.log("Adapter " + adapter.address + ": " + adapter.name);
+        //console.log("Adapter " + adapter.address + ": " + adapter.name);
         console.log("Adapter powered: " + adapter.powered);
         powered = adapter.powered;
         if(adapter.powered) getDevices();
@@ -39,7 +50,15 @@
                 console.log("known devices", devices[i].name, devices[i].address);
                 console.log("paired", devices[i].paired);
                 console.log("connected", devices[i].connected);
-                if(!devices[i].connected) connect(devices[0]);
+                console.log("obj", devices[i]);
+
+                if(!devices[i].connected){
+                    connect(devices[0]);
+                } else {
+                    // let's rock
+                }
+
+
             }
         });
     }
@@ -47,6 +66,7 @@
     // whenever a device is discovered by the adapter or makes a connection to the adapter
     chrome.bluetooth.onDeviceAdded.addListener(function(device) {
         console.log("device added", device.address);
+        getDevices();
     });
 
     // Changes to devices, including previously discovered devices becoming paired
@@ -56,12 +76,11 @@
 
     // whenever a paired device is removed from the system, or a discovered device has not been seen recently
     chrome.bluetooth.onDeviceRemoved.addListener(function(device) {
-        console.log("device removed", device.address);
+        console.log("device removed. You need to pair it.", device.address);
     });
 
 
     // make a connection to a device:
-
     // A socket to make the connection with
     var onConnectedCallback = function() {
         if (chrome.runtime.lastError) {
@@ -73,6 +92,16 @@
         }
     };
 
+    // hang up the connection and disconnect the socket before app closes:
+    chrome.runtime.onSuspend.addListener(function() {
+        console.log("disconnect");
+        chrome.bluetoothSocket.disconnect(socketId);
+    });
+/*
+    var autodisconnect = setTimeout(function(){
+        chrome.bluetoothSocket.disconnect(socketId);
+    }, 2000);
+*/
     function connect(device){
         chrome.bluetoothSocket.create(function(createInfo) {
             socketId = createInfo.socketId; // Keep a handle to the socketId so that we can later send data (bluetoothSocket.send) to this socket
@@ -82,7 +111,7 @@
     }
 
     function send(){
-        var arrayBuffer = write(0x02, 0x20, 0x00, [r, g, b, 0]);
+        var arrayBuffer = write(0x02, 0x20, 0x00, [255, 255, 0, 0]);
 
         chrome.bluetoothSocket.send(socketId, arrayBuffer, function(bytes_sent) {
             if (chrome.runtime.lastError) {
@@ -104,9 +133,6 @@
         // Cause is in errorInfo.error.
         console.log(errorInfo.errorMessage);
     });
-
-    // hang up the connection and disconnect the socket
-    // chrome.bluetoothSocket.disconnect(socketId);
     */
 
     function write (did, cid, seq, data, callback) {
