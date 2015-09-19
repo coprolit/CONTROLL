@@ -1,17 +1,19 @@
-(function (global) {
+(function () {
 	"use strict";
 
 	var
-		sphero = global.sphero,
-		btnDisconnect = global.document.getElementById("btnDisconnect"),
-		con = global.console;
+		//sphero = sphero,
+		btnDisconnect = document.getElementById("btnDisconnect");
 
+	bluetoothModule.start();
+/*
 	if (!sphero) {
 		statusUpdate("sphero", "Sphero API not loaded", "red");
 		return;
 	}
-	
+*/
 	statusUpdate("sphero", "Waiting for Sphero API to become ready...", "yellow");
+	/*
 	sphero.onReady.add(function (){
 		var devices;
 		statusUpdate("sphero", "Sphero API ready, searching for devices...", "yellow");
@@ -36,16 +38,16 @@
 			statusUpdate("sphero", "No devices found, make sure to pair with your Sphero first, then restart this app.", "red");
 		}
 	});
-
+*/
 	//subscribe
-    var gamepadConnectedHandler = global.subscribe("/gamepad/connected", function(msg){
+    var gamepadConnectedHandler = subscribe("/gamepad/connected", function(msg){
 		statusUpdate("gamepad", "Ready", "limegreen");
 		if(!!sphero.getDevice()){ // no Sphero connected == no need to transmit commands
 			transmitterModule.start();
 			statusUpdate("transmit", "", "limegreen");
 		}
     });
-	var gamepadDisconnectedHandler = global.subscribe("/gamepad/disconnected", function(msg){
+	var gamepadDisconnectedHandler = subscribe("/gamepad/disconnected", function(msg){
 		transmitterModule.stop();
 		statusUpdate("transmit", "", "gray");
 		statusUpdate("gamepad", "Connect gamepad and press a coloured button to activate it.", "yellow");
@@ -66,13 +68,13 @@
 		switch(type)
 		{
 		case "gamepad":
-			el = global.document.getElementById("statusGamepad");
+			el = document.getElementById("statusGamepad");
 			break;
 		case "sphero":
-			el = global.document.getElementById("statusSphero");
+			el = document.getElementById("statusSphero");
 			break;
 		case "transmit":
-			el = global.document.getElementById("statusTransmit");
+			el = document.getElementById("statusTransmit");
 			break;
 		default:
 			//code to be executed
@@ -83,8 +85,8 @@
 			p.innerHTML = message;
 			p.style.backgroundColor = color;
 		}
-	};
+	}
 	
 	initGamePadControls();
 	
-}(this));
+}());
