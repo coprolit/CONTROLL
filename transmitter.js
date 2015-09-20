@@ -1,6 +1,10 @@
-var transmitterModule = (function (global) {
-	var gamepad = global.gamePadModule;
-	var sphero = global.sphero;
+var transmitterModule = (function () {
+	'use strict';
+
+	// Role: Converts gamepad inputs into Sphero signals and sends it via Bluetooth module.
+
+	var gamepad = gamePadModule;
+	var radio = bluetoothModule;
 	var speed = 0;
 	var heading = 0;
 	var delta = 0;
@@ -9,9 +13,10 @@ var transmitterModule = (function (global) {
 	
 	// update loop...
 	function startTransmitting(){
+		console.log("startTransmitting()");
 		//speed, heading, delta = 0;
-		fw = global.document.getElementById("fw");
-		hd = global.document.getElementById("hd");
+		//fw = document.getElementById("fw");
+		//hd = document.getElementById("hd");
 		interval = setInterval(sendCommand, 100);
 	}
 	function stopTransmitting(){
@@ -19,6 +24,7 @@ var transmitterModule = (function (global) {
 	}
 	
 	function sendCommand(){
+		//console.log("sendCommand", gamepad.getInputs());
 		if(gamepad.getInputs()){
 			// convert gamepad input to Sphero output:
 					
@@ -46,38 +52,80 @@ var transmitterModule = (function (global) {
 			
 			// Send Sphero updates 
 			if(speed === 0){
-				sphero.roll(0, heading, 0); // Commence optimal braking to zero speed
+				radio.send(roll(0, heading, 0)); // Commence optimal braking to zero speed
 			} else {
-				sphero.roll(speed, heading, 1);
+				radio.send(roll(speed, heading, 1));
 			}
 			
 			// update UI
-			hd.innerHTML = heading;
-			fw.innerHTML = speed;
+			//hd.innerHTML = heading;
+			//fw.innerHTML = speed;
 			
 			// Y yellow
 			if(gamepad.getInputs().buttons[3]){
-				sphero.changeColor(255, 255, 0);
+				radio.send(changeColor(255, 255, 0));
 			}
 			
 			// R red
 			if(gamepad.getInputs().buttons[1]){
-				sphero.changeColor(255, 0, 0);
+				radio.send(changeColor(255, 0, 0));
 			}
 			
 			// A green
 			if(gamepad.getInputs().buttons[2]){
-				sphero.changeColor(0, 0, 255);
+				radio.send(changeColor(0, 0, 255));
 			}
 			
 			// X blue
 			if(gamepad.getInputs().buttons[0]){
-				sphero.changeColor(0, 255, 0);
+				radio.send(changeColor(0, 255, 0));
 			}
 		} else {
 			// no inputs = no controller connected
-			global.publish("/gamepad/disconnected", ["disconnected"]);
+			publish("/gamepad/disconnected", ["disconnected"]);
 		}
+	}
+
+	// Commands to control the Sphero:
+	function changeColor(r, g, b) {
+	 	return write(0x02, 0x20, 0x00, [r, g, b, 0]);
+	}
+
+	function setTailLight(bright) {
+		return write(0x02, 0x21, 0x00, [bright]);
+	}
+
+	function setHeading(heading) {
+	 	return write(0x02, 0x01, 0x00, [(heading >> 8), heading]);
+	}
+
+	function roll(speed, heading, go) {
+	 	return write(0x02, 0x30, 0x00, [speed, (heading >> 8), heading, (go ? 1 : 0)]);
+	}
+
+	// convert to binary data:
+	function write (did, cid, seq, data) {
+		var buffer, view, check, i;
+		//if (!current_device || !current_socket) { return; }
+		buffer = new ArrayBuffer(7 + data.length);
+		view = new Uint8Array(buffer);
+		view[0] = 0xFF;
+		view[1] = 0xFE;
+		view[2] = did & 0xFF;
+		view[3] = cid & 0xFF;
+		view[4] = seq & 0xFF;
+		view[5] = data.length + 1;
+		for (i = 0; i < data.length; i++) {
+			view[6 + i] = data[i] & 0xFF;
+		}
+
+		check = 0;
+		for (i = 2; i <= 5 + data.length; i++) {
+			check += view[i];
+		}
+		view[6 + data.length] = check & 0xFF ^ 0xFF;
+
+		return buffer;
 	}
 	
 	// Reveal public pointers to private functions and properties
@@ -86,4 +134,4 @@ var transmitterModule = (function (global) {
 		stop: stopTransmitting
 	};
 	
-})(this);
+})();

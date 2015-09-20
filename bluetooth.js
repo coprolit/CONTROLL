@@ -5,8 +5,8 @@
 var bluetoothModule = (function() {
     "use strict";
     /*
-
     Role: handle all Bluetooth related logic.
+
     1. check host adapter radio is powered on
         else: alert user to turn on bt radio
     2. check known/paired devices on adapter for Sphero
@@ -15,12 +15,18 @@ var bluetoothModule = (function() {
     3. check if Sphero is connected
         - else connect
     4. broadcast 'connection:on' to app.
-     */
+    */
 
     var powered = false,
         socketId = 0,
-        device = 0,
-        uuid = ''; // '00001101-0000-1000-8000-00805f9b34fb';
+        targetDevice = 0,
+        uuid;
+        //uuid = ''; // '00001101-0000-1000-8000-00805f9b34fb';
+
+    function init(_uuid){
+        uuid = _uuid;
+        checkAdapter();
+    }
 
     // Obtaining adapter state
     function checkAdapter(){
@@ -30,39 +36,51 @@ var bluetoothModule = (function() {
             powered = adapter.powered;
             if(adapter.powered) getDevice();
         });
-
-        // Adapter notifications
-        chrome.bluetooth.onAdapterStateChanged.addListener(function(adapter) {
-            if (adapter.powered != powered) {
-                powered = adapter.powered;
-                if (powered) {
-                    //console.log("Adapter radio is on");
-                    getDevice();
-                } else {
-                    console.log("Adapter radio is off. Please turn it on.");
-                }
-            }
-        });
     }
 
-    function filterByUUID(obj) {
-        return !!('uuids' in obj && obj.uuids[0] === uuid); // search for Sphero uuid
+    // Adapter notifications
+    chrome.bluetooth.onAdapterStateChanged.addListener(function(adapter) {
+        if (adapter.powered != powered) {
+            powered = adapter.powered;
+            if (powered) {
+                //console.log("Adapter radio is on");
+                getDevice();
+            } else {
+                console.log("Adapter radio is off. Please turn it on.");
+            }
+        }
+    });
+
+    function filterUUIDs(value){
+        // step through uuids array for specified uuid
+        return value === uuid;
+    }
+
+    function filterDevices(device) {
+        // search for specified uuid in uuids array of device
+        let resultArray = device.uuids.filter(function(val){
+            return (val === uuid);
+        });
+
+        return (resultArray.length > 0);
     }
 
     function getDevice(){
         // Get a list of the devices known to the Bluetooth adapter
         // All devices are returned, including paired devices and devices recently discovered. It will not begin discovery of new devices
         chrome.bluetooth.getDevices(function(devices) {
-            var spheroDevice = devices.filter(filterByUUID);
+            //console.log("devices", devices);
+            targetDevice = devices.filter(filterDevices)[0];
 
-            if(spheroDevice.length > 0){
+            if(targetDevice){
                 // adapter knows of the sphero
                 console.log("adapter knows of the sphero");
-                if(spheroDevice.connected){
+                if(targetDevice.connected){
+                    console.log("sphero already connected.");
                     onConnectionReady();
                 } else {
-                    console.log("sphero not connected. Connecting...");
-                    connect(spheroDevice[0]);
+                    console.log("sphero not connected.");
+                    connect();
                 }
             } else {
                 console.log("no Sphero known. Turn on Sphero and pair it.");
@@ -75,12 +93,13 @@ var bluetoothModule = (function() {
         console.log("device added", device.name);
         getDevice();
     });
-/*
+
     // Changes to devices, including previously discovered devices becoming paired
     chrome.bluetooth.onDeviceChanged.addListener(function(device) {
         console.log("device changed", device.name);
+        getDevice();
     });
-
+/*
     // whenever a paired device is removed from the system, or a discovered device has not been seen recently
     chrome.bluetooth.onDeviceRemoved.addListener(function(device) {
         console.log("device removed. You need to pair it.", device.name);
@@ -90,33 +109,36 @@ var bluetoothModule = (function() {
     // A socket to make the connection with
     chrome.bluetoothSocket.create(function(createInfo) {
         socketId = createInfo.socketId; // Keep a handle to the socketId so that we can later send data (bluetoothSocket.send) to this socket
-
     });
 
     var onConnectedCallback = function() {
         if (chrome.runtime.lastError) {
             console.log("Connection failed: " + chrome.runtime.lastError.message);
-            console.log("cannot connect to Sphero. Make sure it is turned on and in range.")
-            connect();
+            console.log("cannot connect to Sphero. Make sure it is turned on and in range.");
+            //connect();
+            // Now begin the discovery process.
+            /*
+            chrome.bluetooth.startDiscovery(function() {
+                // Stop discovery after 30 seconds.
+                setTimeout(function() {
+                    chrome.bluetooth.stopDiscovery(function() {});
+                }, 30000);
+            });
+            */
+            setTimeout(connect, 1000);
         } else {
             onConnectionReady();
         }
     };
 
-    // hang up the connection and disconnect the socket before app closes:
-    chrome.runtime.onSuspend.addListener(function() {
-        console.log("disconnect");
-        chrome.bluetoothSocket.disconnect(socketId);
-    });
-
     // make a connection to a device:
-    function connect(device){
-        chrome.bluetoothSocket.connect(socketId, device.address, uuid, onConnectedCallback);
+    function connect(){
+        console.log("attempting connection...");
+        chrome.bluetoothSocket.connect(socketId, targetDevice.address, uuid, onConnectedCallback);
     }
 
-    function send(){
-        var arrayBuffer = write(0x02, 0x20, 0x00, [255, 255, 0, 0]);
-
+    function send(arrayBuffer){
+        //var arrayBuffer = write(0x02, 0x20, 0x00, [255, 255, 0, 0]);
         chrome.bluetoothSocket.send(socketId, arrayBuffer, function(bytes_sent) {
             if (chrome.runtime.lastError) {
                 console.log("Send failed: " + chrome.runtime.lastError.message);
@@ -136,60 +158,24 @@ var bluetoothModule = (function() {
     // To be notified of socket errors, including disconnection
     chrome.bluetoothSocket.onReceiveError.addListener(function(errorInfo) {
         // Cause is in errorInfo.error.
-        console.log("socket error", errorInfo.errorMessage);
+        console.log("socket error or disconnect", errorInfo.errorMessage);
         getDevice();
     });
 
-    function write (did, cid, seq, data, callback) {
-        var buffer, view, check, i;
-        //if (!current_device || !current_socket) { return; }
-        buffer = new ArrayBuffer(7 + data.length);
-        view = new Uint8Array(buffer);
-        view[0] = 0xFF;
-        view[1] = 0xFE;
-        view[2] = did & 0xFF;
-        view[3] = cid & 0xFF;
-        view[4] = seq & 0xFF;
-        view[5] = data.length + 1;
-        for (i = 0; i < data.length; i++) {
-            view[6 + i] = data[i] & 0xFF;
-        }
-
-        check = 0;
-        for (i = 2; i <= 5 + data.length; i++) {
-            check += view[i];
-        }
-        view[6 + data.length] = check & 0xFF ^ 0xFF;
-
-        return buffer;
-    }
-
     function onConnectionReady(){
-        console.log("connection succes!");
+        //console.log("connection succes!");
+        //publish("/bluetooth/status", ["success", "Device connected."]);
+        publish("/bluetooth/connected");
     }
 
-    // Functions to actually control the sphero
-    /*
-    this.changeColor = function (r, g, b, callback) {
-        write(0x02, 0x20, 0x00, [r, g, b, 0], callback);
-    };
+    // hang up the connection and disconnect the socket before app closes:
+    chrome.runtime.onSuspend.addListener(function() {
+        console.log("disconnect");
+        chrome.bluetoothSocket.disconnect(socketId);
+    });
 
-    this.setTailLight = function (bright, callback) {
-        write(0x02, 0x21, 0x00, [bright], callback);
-    };
-
-    this.setHeading = function (heading, callback) {
-        write(0x02, 0x01, 0x00, [(heading >> 8), heading], callback);
-    };
-
-    this.roll = function (speed, heading, go, callback) {
-        write(0x02, 0x30, 0x00, [speed, (heading >> 8), heading, (go ? 1 : 0)], callback);
-    };
-    */
-
-    // Reveal public pointers to private functions and properties
     return {
-        start: checkAdapter,
+        start: init,
         send: send
     };
 

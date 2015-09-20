@@ -1,9 +1,19 @@
-var gamePadModule = (function (global) {
+var gamePadModule = (function() {
 	var
 		gamepad = false,
 		prevTimestamp,
 		ticking = false,
 		connected = true;
+
+	window.addEventListener("gamepadconnected", function(e) {
+		gamepad = navigator.getGamepads()[e.gamepad.index];
+		startPolling();
+		//console.log("Gamepad connected at index " + gp.index + ": " + gp.id + ". It has " + gp.buttons.length + " buttons and " + gp.axes.length + " axes.");
+	});
+	window.addEventListener("gamepaddisconnected", function(e) {
+		console.log("Gamepad disconnected from index %d: %s", e.gamepad.index, e.gamepad.id);
+		stopPolling();
+	});
 	
 	/**
 	 * Starts a polling loop to check for gamepad state.
@@ -53,7 +63,7 @@ var gamePadModule = (function (global) {
 	 */
 	 
 	function pollStatus() {
-		gamepad = navigator.webkitGetGamepads && navigator.webkitGetGamepads()[0];
+		//gamepad = navigator.getGamepads()[0];
 		if(gamepad){
 			// If current timestamp == previous one, then the state of the gamepad hasn't changed and there is no need to update.
 			if (prevTimestamp && (gamepad.timestamp == prevTimestamp)) {
@@ -63,12 +73,12 @@ var gamePadModule = (function (global) {
 			prevTimestamp = gamepad.timestamp;
 			
 			if(!connected){
-				global.publish("/gamepad/connected", ["connected"]);
+				publish("/gamepad/connected");
 				connected = true;
 			}
 		} else {
 			if(connected){
-				global.publish("/gamepad/disconnected", ["disconnected"]);
+				publish("/gamepad/disconnected");
 				connected = false;
 			}
 		}
@@ -81,4 +91,4 @@ var gamePadModule = (function (global) {
 		getInputs: function() { return gamepad; }
 	};
 	
-})(this);
+})();

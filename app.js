@@ -1,18 +1,19 @@
 (function () {
 	"use strict";
 
-	var
+	var deviceReady = false,
+		gamepadReady = false,
 		//sphero = sphero,
 		btnDisconnect = document.getElementById("btnDisconnect");
 
-	bluetoothModule.start();
+
 /*
 	if (!sphero) {
 		statusUpdate("sphero", "Sphero API not loaded", "red");
 		return;
 	}
 */
-	statusUpdate("sphero", "Waiting for Sphero API to become ready...", "yellow");
+	//statusUpdate("sphero", "Waiting for Sphero API to become ready...", "yellow");
 	/*
 	sphero.onReady.add(function (){
 		var devices;
@@ -39,29 +40,60 @@
 		}
 	});
 */
-	//subscribe
-    var gamepadConnectedHandler = subscribe("/gamepad/connected", function(msg){
-		statusUpdate("gamepad", "Ready", "limegreen");
-		if(!!sphero.getDevice()){ // no Sphero connected == no need to transmit commands
-			transmitterModule.start();
-			statusUpdate("transmit", "", "limegreen");
+	function initTransmitter() {
+		if(deviceReady && gamepadReady) transmitterModule.start();
+	}
+
+	// Event subscriptions:
+
+	// Bluetooth events
+    subscribe("/bluetooth/connected", function(args){
+		deviceReady = true;
+		initTransmitter();
+	});
+/*
+    subscribe("/bluetooth/status", function(args){
+		var status = args[0];
+		var msg = args[1];
+		console.log("status", status);
+		if(status === "success"){
+			//console.log(msg);
+			console.log('deviceReady = true');
+			deviceReady = true;
+			initTransmitter();
+		}
+		if(status === "alert"){
+			console.log(msg);
+			deviceReady = false;
+			transmitterModule.stop();
 		}
     });
-	var gamepadDisconnectedHandler = subscribe("/gamepad/disconnected", function(msg){
-		transmitterModule.stop();
-		statusUpdate("transmit", "", "gray");
-		statusUpdate("gamepad", "Connect gamepad and press a coloured button to activate it.", "yellow");
+*/
+	// Gamepad events
+	subscribe("/gamepad/connected", function(msg){
+		//console.log("gamepad connected");
+		console.log('gamepadReady = true');
+		gamepadReady = true;
+		initTransmitter();
     });
-	
+	subscribe("/gamepad/disconnected", function(msg){
+		console.log("gamepad disconnected");
+		gamepadReady = false;
+		transmitterModule.stop();
+		//statusUpdate("gamepad", "Connect gamepad and press a coloured button to activate it.", "yellow");
+    });
+	/*
 	function initGamePadControls(){
 		var gamepadSupportAvailable = !!navigator.webkitGetGamepads || !!navigator.webkitGamepads;
 		if(gamepadSupportAvailable){
 			gamePadModule.start();
 		} else {
-			statusUpdate("gamepad", "Gamepad support unavailable", "red");
+			console.log("gamepad support unavailable");
+			//statusUpdate("gamepad", "Gamepad support unavailable", "red");
 		}
 	}
-	
+	*/
+	/*
 	function statusUpdate(type, message, color){
 		var el;
 		
@@ -86,7 +118,9 @@
 			p.style.backgroundColor = color;
 		}
 	}
-	
-	initGamePadControls();
+	*/
+	//gamePadModule.start(); // start listening for gamepad.
+	//initGamePadControls(); // start listening for gamepad.
+	bluetoothModule.start('00001101-0000-1000-8000-00805f9b34fb'); // start listening for Sphero device.
 	
 }());
