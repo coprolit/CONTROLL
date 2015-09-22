@@ -69,6 +69,7 @@ var gamePadModule = (function() {
 
 			prevTimestamp = _gamepad.timestamp;
 
+			var event = new CustomEvent('gamepad:update', { 'detail': _gamepad });
 			window.dispatchEvent(event); // emit that gamepad state has changed
 		}
 	}
@@ -76,8 +77,8 @@ var gamePadModule = (function() {
 	// Reveal public pointers to private functions and properties
 	return {
 		start: startPolling,
-		stop: stopPolling,
-		getInputs: function() { return gamepad; }
+		stop: stopPolling/*,
+		getInputs: function() { return gamepad; }*/
 	};
 	
 })();

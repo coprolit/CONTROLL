@@ -2,7 +2,6 @@
 	"use strict";
 
 	var deviceReady = false,
-		gamepadReady = false,
 		btnDisconnect = document.getElementById("btnDisconnect");
 
 	//statusUpdate("sphero", "Waiting for Sphero API to become ready...", "yellow");
@@ -32,32 +31,38 @@
 		}
 	});
 */
-	function sendCommand() {
-		console.log('sendCommand()');
-		if(deviceReady) console.log("device connected");
-		//if(gamepadReady) console.log("gamepad connected");
-		if(deviceReady) adapterModule.send(gamePadModule.getInputs());
+	function sendCommand(inputs) {
+		if(deviceReady) adapterModule.send(inputs);
 	}
 
 	// Event subscriptions:
 
 	// Bluetooth events
+	window.addEventListener("bluetooth:connected", function(e) {
+		deviceReady = true;
+	});
+	window.addEventListener("bluetooth:disconnected", function(e) {
+		deviceReady = false;
+	});
+	window.addEventListener("bluetooth:failed", function(e) {
+		console.log("cannot connect to Sphero. Make sure it is turned on and in range.");
+	});
+
+	/*
     subscribe("/bluetooth/connected", function(msg){
 		deviceReady = true;
-		//initTransmitter();
 	});
 	subscribe("/bluetooth/disconnected", function(msg){
-		console.log("device disconnected");
 		deviceReady = false;
-		//transmitterModule.stop();
 	});
 	subscribe("/bluetooth/status", function(msg){
 		console.log(msg);
 	});
+	*/
 
 	// Gamepad events
-	window.addEventListener("gamepadupdate", function(e) {
-		console.log('gamepad update');
+	window.addEventListener("gamepad:update", function(e) {
+		sendCommand(e.detail);
 	});
 
 	/*

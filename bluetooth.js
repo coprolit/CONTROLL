@@ -114,7 +114,8 @@ var bluetoothModule = (function() {
     var onConnectedCallback = function() {
         if (chrome.runtime.lastError) {
             console.log("Connection failed: " + chrome.runtime.lastError.message);
-            console.log("cannot connect to Sphero. Make sure it is turned on and in range.");
+            var event = new Event('bluetooth:failed');
+            window.dispatchEvent(event);
             //connect();
             // Now begin the discovery process.
             /*
@@ -143,7 +144,7 @@ var bluetoothModule = (function() {
             if (chrome.runtime.lastError) {
                 console.log("Send failed: " + chrome.runtime.lastError.message);
             } else {
-                console.log("Sent " + bytes_sent + " bytes")
+                //console.log("Sent " + bytes_sent + " bytes")
             }
         })
     }
@@ -160,17 +161,19 @@ var bluetoothModule = (function() {
         // Cause is in errorInfo.error.
         console.log("socket error or disconnect", errorInfo.errorMessage);
         getDevice();
+        var event = new Event('bluetooth:disconnected');
+        window.dispatchEvent(event);
     });
 
     function onConnectionReady(){
-        //console.log("connection succes!");
-        //publish("/bluetooth/status", ["success", "Device connected."]);
-        publish("/bluetooth/connected");
+        console.log("Sphero connected");
+        var event = new Event('bluetooth:connected');
+        window.dispatchEvent(event);
     }
 
     // hang up the connection and disconnect the socket before app closes:
     chrome.runtime.onSuspend.addListener(function() {
-        console.log("disconnect");
+        console.log("force disconnect");
         chrome.bluetoothSocket.disconnect(socketId);
     });
 
