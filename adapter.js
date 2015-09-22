@@ -11,9 +11,9 @@ var adapterModule = (function () {
 	function sendCommand(inputs){
 		// convert gamepad input to Sphero output:
 
-		// Heading : Second stick
-		if(inputs.axes[2] > 0.15 || inputs.axes[2] < -0.15){ // threshold
-			delta = Math.round(inputs.axes[2] * 10); // negative = turn left, positive = turn right
+		// Heading : First stick
+		if(inputs.axes[0] > 0.15 || inputs.axes[0] < -0.15){ // threshold
+			delta = Math.round(inputs.axes[0] * 10); // negative = turn left, positive = turn right
 			heading = heading + delta;
 
 			if(heading > 359){
@@ -25,8 +25,8 @@ var adapterModule = (function () {
 			}
 		}
 
-		// Forward : Left bottom shoulder
-		speed = Math.round(inputs.buttons[6].value * 255);
+		// Forward : Right bottom shoulder
+		speed = Math.round(inputs.buttons[7].value * 255);
 
 		// Brake : Right top shoulder
 		if(inputs.buttons[5].pressed){

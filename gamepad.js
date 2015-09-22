@@ -1,21 +1,20 @@
 var gamePadModule = (function() {
-	var
-		gamepad = false,
+	var gamepad = false,
 		prevTimestamp = null,
-		ticking = false,
-		connected = true,
-		event = new Event('gamepadupdate');
+		ticking = false;
 
 	window.addEventListener("gamepadconnected", function(e) {
 		gamepad = navigator.getGamepads()[e.gamepad.index];
-		//connected = true;
-		console.log("Gamepad connected");
+
+		var event = new Event('gamepad:connected');
+		window.dispatchEvent(event);
+
 		startPolling();
-		//console.log("Gamepad connected at index " + gp.index + ": " + gp.id + ". It has " + gp.buttons.length + " buttons and " + gp.axes.length + " axes.");
 	});
 	window.addEventListener("gamepaddisconnected", function(e) {
-		console.log("Gamepad disconnected from index %d: %s", e.gamepad.index, e.gamepad.id);
-		//connected = false;
+		var event = new Event('gamepad:disconnected');
+		window.dispatchEvent(event);
+
 		stopPolling();
 	});
 	

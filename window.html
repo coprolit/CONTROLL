@@ -2,10 +2,8 @@
 <html>
   <head>
 	<meta charset="UTF-8">
-    <title>Sphero eksperiment</title>
+    <title>Sphero eksperiment v0.3</title>
     <link rel="stylesheet" href="style.css" type="text/css">
-    <script src="libs/minpubsub.js"></script>
-    <!--<script src="libs/sphero.js"></script>-->
     <script src="bluetooth.js"></script>
     <script src="gamepad.js"></script>
     <script src="adapter.js"></script>
@@ -13,10 +11,10 @@
   <body>
 	<div class="logo">
 		<img src="sphero-gamepad-16.png" />
-		<p>CONTROLL - gamepad adapter for Sphero v0.3</p>
+		<p>CONTROLL - gamepad adapter for Sphero</p>
 	</div>
-	<div>
-		<div id="console"></div>
+	<div class="container">
+		<h1 id="status"></h1>
 		<!--
 		<div id="statusGamepad" class="status">
 			<img src="icon-game-controller-b-32.png" />
