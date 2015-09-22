@@ -1,17 +1,21 @@
 var gamePadModule = (function() {
 	var
 		gamepad = false,
-		prevTimestamp,
+		prevTimestamp = null,
 		ticking = false,
-		connected = true;
+		connected = true,
+		event = new Event('gamepadupdate');
 
 	window.addEventListener("gamepadconnected", function(e) {
 		gamepad = navigator.getGamepads()[e.gamepad.index];
+		//connected = true;
+		console.log("Gamepad connected");
 		startPolling();
 		//console.log("Gamepad connected at index " + gp.index + ": " + gp.id + ". It has " + gp.buttons.length + " buttons and " + gp.axes.length + " axes.");
 	});
 	window.addEventListener("gamepaddisconnected", function(e) {
 		console.log("Gamepad disconnected from index %d: %s", e.gamepad.index, e.gamepad.id);
+		//connected = false;
 		stopPolling();
 	});
 	
@@ -44,17 +48,9 @@ var gamePadModule = (function() {
 	}
 
 	function scheduleNextTick() {
-	  // Only schedule the next frame if we haven't decided to stop via stopPolling() before.
-		if (ticking) {
-			if (window.requestAnimationFrame) {
-				window.requestAnimationFrame(tick);
-			} else if (window.mozRequestAnimationFrame) {
-				window.mozRequestAnimationFrame(tick);
-			} else if (window.webkitRequestAnimationFrame) {
-				window.webkitRequestAnimationFrame(tick);
-			}
-			// Note lack of setTimeout since all the browsers that support Gamepad API are already supporting requestAnimationFrame().
-		}    
+		if (ticking) { // Only schedule the next frame if we haven't decided to stop via stopPolling() before.
+			window.requestAnimationFrame(tick);
+		}
 	}
 
 	/**
@@ -63,24 +59,17 @@ var gamePadModule = (function() {
 	 */
 	 
 	function pollStatus() {
-		//gamepad = navigator.getGamepads()[0];
-		if(gamepad){
+		_gamepad = navigator.getGamepads()[0];
+
+		if(_gamepad){
 			// If current timestamp == previous one, then the state of the gamepad hasn't changed and there is no need to update.
-			if (prevTimestamp && (gamepad.timestamp == prevTimestamp)) {
+			if (prevTimestamp && (_gamepad.timestamp === prevTimestamp)) {
 				return;
 			}
-			
-			prevTimestamp = gamepad.timestamp;
-			
-			if(!connected){
-				publish("/gamepad/connected");
-				connected = true;
-			}
-		} else {
-			if(connected){
-				publish("/gamepad/disconnected");
-				connected = false;
-			}
+
+			prevTimestamp = _gamepad.timestamp;
+
+			window.dispatchEvent(event); // emit that gamepad state has changed
 		}
 	}
 	

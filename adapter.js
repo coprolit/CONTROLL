@@ -1,15 +1,13 @@
-var transmitterModule = (function () {
+var adapterModule = (function () {
 	'use strict';
 
-	// Role: Converts gamepad inputs into Sphero signals and sends it via Bluetooth module.
+	// Role: takes gamepad inputs, converts them into Sphero signals, and sends via Bluetooth module.
 
-	var gamepad = gamePadModule;
-	var radio = bluetoothModule;
-	var speed = 0;
-	var heading = 0;
-	var delta = 0;
-	var interval;
-	var hd, fw;
+	var radio = bluetoothModule,
+		speed = 0,
+		heading = 0,
+		delta = 0,
+		interval;
 	
 	// update loop...
 	function startTransmitting(){
@@ -23,14 +21,14 @@ var transmitterModule = (function () {
 		clearInterval(interval);
 	}
 	
-	function sendCommand(){
-		//console.log("sendCommand", gamepad.getInputs());
-		if(gamepad.getInputs()){
+	function sendCommand(inputs){
+		console.log("sendCommand", inputs);
+		//if(gamepad.getInputs()){
 			// convert gamepad input to Sphero output:
 					
 			// Heading : Second stick
-			if(gamepad.getInputs().axes[2] > 0.15 || gamepad.getInputs().axes[2] < -0.15){ // threshold
-				delta = Math.round(gamepad.getInputs().axes[2] * 10); // negative = turn left, positive = turn right
+			if(inputs().axes[2] > 0.15 || inputs().axes[2] < -0.15){ // threshold
+				delta = Math.round(inputs().axes[2] * 10); // negative = turn left, positive = turn right
 				heading = heading + delta;
 				
 				if(heading > 359){
@@ -43,10 +41,10 @@ var transmitterModule = (function () {
 			}
 				
 			// Forward : Left bottom shoulder
-			speed = Math.round(gamepad.getInputs().buttons[6] * 255);
+			speed = Math.round(inputs().buttons[6] * 255);
 			
 			// Brake : Right top shoulder
-			if(gamepad.getInputs().buttons[5]){
+			if(inputs().buttons[5]){
 				speed = 0;
 			}
 			
@@ -62,28 +60,30 @@ var transmitterModule = (function () {
 			//fw.innerHTML = speed;
 			
 			// Y yellow
-			if(gamepad.getInputs().buttons[3]){
+			if(inputs().buttons[3]){
 				radio.send(changeColor(255, 255, 0));
 			}
 			
 			// R red
-			if(gamepad.getInputs().buttons[1]){
+			if(inputs().buttons[1]){
 				radio.send(changeColor(255, 0, 0));
 			}
 			
 			// A green
-			if(gamepad.getInputs().buttons[2]){
+			if(inputs().buttons[2]){
 				radio.send(changeColor(0, 0, 255));
 			}
 			
 			// X blue
-			if(gamepad.getInputs().buttons[0]){
+			if(inputs().buttons[0]){
 				radio.send(changeColor(0, 255, 0));
 			}
+		/*
 		} else {
 			// no inputs = no controller connected
 			publish("/gamepad/disconnected", ["disconnected"]);
 		}
+		*/
 	}
 
 	// Commands to control the Sphero:
@@ -131,6 +131,7 @@ var transmitterModule = (function () {
 	// Reveal public pointers to private functions and properties
 	return {
 		start: startTransmitting,
+		send: sendCommand,
 		stop: stopTransmitting
 	};
 	

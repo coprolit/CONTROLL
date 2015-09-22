@@ -32,10 +32,11 @@
 		}
 	});
 */
-	function initTransmitter() {
+	function sendCommand() {
+		console.log('sendCommand()');
 		if(deviceReady) console.log("device connected");
-		if(gamepadReady) console.log("gamepad connected");
-		if(deviceReady && gamepadReady) transmitterModule.start();
+		//if(gamepadReady) console.log("gamepad connected");
+		if(deviceReady) adapterModule.send(gamePadModule.getInputs());
 	}
 
 	// Event subscriptions:
@@ -43,30 +44,21 @@
 	// Bluetooth events
     subscribe("/bluetooth/connected", function(msg){
 		deviceReady = true;
-		initTransmitter();
+		//initTransmitter();
 	});
-
 	subscribe("/bluetooth/disconnected", function(msg){
 		console.log("device disconnected");
 		deviceReady = false;
-		transmitterModule.stop();
+		//transmitterModule.stop();
 	});
-
 	subscribe("/bluetooth/status", function(msg){
 		console.log(msg);
 	});
 
 	// Gamepad events
-	subscribe("/gamepad/connected", function(msg){
-		gamepadReady = true;
-		initTransmitter();
-    });
-	subscribe("/gamepad/disconnected", function(msg){
-		console.log("gamepad disconnected");
-		gamepadReady = false;
-		transmitterModule.stop();
-		//statusUpdate("gamepad", "Connect gamepad and press a coloured button to activate it.", "yellow");
-    });
+	window.addEventListener("gamepadupdate", function(e) {
+		console.log('gamepad update');
+	});
 
 	/*
 	function statusUpdate(type, message, color){
