@@ -22,7 +22,7 @@
 		if(!gamepadReady){
 			updateStatus('Plug in gamepad and press <div class="btnColor blue">X</div> <div class="btnColor yellow">Y</div> <div class="btnColor green">A</div> or <div class="btnColor red">B</div>');
 		} else {
-			updateStatus('<img src="CONTROLL-mapping.png">');
+			updateStatus('<img src="imgs/CONTROLL-mapping.png">');
 		}
 	});
 	window.addEventListener("bluetooth:disconnected", function(e) {
@@ -35,7 +35,7 @@
 	// Gamepad events
 	window.addEventListener("gamepad:connected", function(e) {
 		gamepadReady = true;
-		if(deviceReady) updateStatus('<img src="CONTROLL-mapping.png">');
+		if(deviceReady) updateStatus('<img src="imgs/CONTROLL-mapping.png">');
 	});
 	window.addEventListener("gamepad:disconnected", function(e) {
 		gamepadReady = false;
