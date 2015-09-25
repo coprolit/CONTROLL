@@ -7,11 +7,10 @@ var bluetoothModule = (function() {
     /*
     Role: handle all Bluetooth related logic.
 
-    1. check host adapter radio is powered on
-        else: alert user to turn on bt radio
-    2. check known/paired devices on adapter for Sphero
-        - else search
-            - alert user to turn on Sphero
+    1. check host adapter radio is powered on (adapter state)
+        - else: alert user to turn on bt radio
+    2. search known/paired devices on adapter for Sphero
+        - else: alert user to pair Sphero
     3. check if Sphero is connected
         - else connect
     4. broadcast 'connection:on' to app.
@@ -40,14 +39,7 @@ var bluetoothModule = (function() {
     chrome.bluetooth.onDeviceAdded.addListener(function(device) {
         getDevice();
     });
-/*
-    // Changes to devices, including previously discovered devices becoming paired
-    chrome.bluetooth.onDeviceChanged.addListener(function(device) {
-        console.log("device changed", device.name);
 
-        getDevice();
-    });
-*/
     // whenever a paired device is unpaired
     chrome.bluetooth.onDeviceRemoved.addListener(function(device) {
         var event = new CustomEvent('bluetooth:status', {'detail': 'Device lost. Pair Sphero to continue.' });
@@ -115,20 +107,21 @@ var bluetoothModule = (function() {
         var event = new CustomEvent('bluetooth:status', {'detail': 'Connecting Sphero...' });
         window.dispatchEvent(event);
 
-        //chrome.bluetoothSocket.disconnect(socketId);
         // A socket to make the connection with
         chrome.bluetoothSocket.create(function(createInfo) {
-            socketId = createInfo.socketId; // Keep a handle to the socketId so that we can later send data (bluetoothSocket.send) to this socket
+            socketId = createInfo.socketId; // Keep a handle to the socketId so that we can later send data to this socket
 
             chrome.bluetoothSocket.connect(socketId, targetDevice.address, uuid, onConnectedCallback);
         });
     }
 
     function send(arrayBuffer){
-        //var arrayBuffer = write(0x02, 0x20, 0x00, [255, 255, 0, 0]);
+        // To send commands to Sphero as raw binary data, this function expects an arrayBuffer as argument.
         chrome.bluetoothSocket.send(socketId, arrayBuffer, function(bytes_sent) {
             if (chrome.runtime.lastError) {
-                console.log("Send failed: " + chrome.runtime.lastError.message);
+                //console.log("Send failed: " + chrome.runtime.lastError.message);
+                var event = new CustomEvent('bluetooth:status', {'detail': chrome.runtime.lastError.message });
+                window.dispatchEvent(event);
             } else {
                 //console.log("Sent " + bytes_sent + " bytes")
             }
@@ -136,9 +129,9 @@ var bluetoothModule = (function() {
     }
 
     function onConnectionReady(){
+        // Sphero is connected, let's roll.
         var event = new Event('bluetooth:connected');
         window.dispatchEvent(event);
-        console.log("onConnectionReady(): Sphero connected");
     }
 
     // hang up the connection and disconnect the socket before app closes:

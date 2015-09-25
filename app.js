@@ -3,8 +3,7 @@
 
 	var deviceReady = false,
 		gamepadReady = false,
-		consoleEl = document.getElementById("status"),
-		btnDisconnect = document.getElementById("btnDisconnect");
+		consoleEl = document.getElementById("status");
 
 	function sendCommand(inputs) {
 		if(deviceReady) adapterModule.send(inputs);
@@ -45,34 +44,7 @@
 		sendCommand(e.detail);
 	});
 
-	/*
-	function statusUpdate(type, message, color){
-		var el;
-		
-		switch(type)
-		{
-		case "gamepad":
-			el = document.getElementById("statusGamepad");
-			break;
-		case "sphero":
-			el = document.getElementById("statusSphero");
-			break;
-		case "transmit":
-			el = document.getElementById("statusTransmit");
-			break;
-		default:
-			//code to be executed
-		}
-
-		if(message.length > 0){
-			var p = el.getElementsByTagName("p")[0];
-			p.innerHTML = message;
-			p.style.backgroundColor = color;
-		}
-	}
-	*/
-	//gamePadModule.start(); // start listening for gamepad.
+	// start up application:
 	bluetoothModule.start('00001101-0000-1000-8000-00805f9b34fb'); // connect to Sphero device.
-
-	updateStatus("Warming up...")
+	updateStatus("Warming up...");
 }());

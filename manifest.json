@@ -1,8 +1,8 @@
 {
    "name": "CONTROLL",
-   "description": "Gamepad adapter for Sphero",
+   "description": "Control your Sphero robotic ball with a physical gamepad.",
    "author": "Philippe Simpson",
-   "version": "0.3",
+   "version": "0.3.1",
    "manifest_version": 2,
    "app": {
       "background": {
@@ -10,8 +10,8 @@
       }
    },
    "icons": {
-      "128": "sphero-gamepad-128.png",
-      "16": "sphero-gamepad-16.png"
+      "128": "imgs/sphero-gamepad-128.png",
+      "16": "imgs/sphero-gamepad-16.png"
    },
    "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAjcCFSHko1EM9fPHmsVuEI1Gih9M/lQaqEy5thcM4jk1nhLkT4i0Je1SCwcVQKqp4XQPaQi81p/CFzM9fkMXCrot8n+7ScU68Z0cnqoB7qvdAs5RtqNNhJYK7pxtsRtidOZ7AeFRFSuD1S9EGkZ57ND2iUfhx6AafWOEXsr1k7/SRL7MKx9MuFqJhmO2tdaJZVzqacGbz1v5UrBLdtU5g7OA/tZHikqDtIgNkUeMXk3vz163KAAmowCvFRmhEQWbeBWBt4vBvlEwUOWkoUqKecYzS92EFrH2MrG9oAtRickBsYgIYJf7Qt4uK119lFiT7aiunJRw12y0uSp/GoLqW7QIDAQAB",
    "bluetooth": {

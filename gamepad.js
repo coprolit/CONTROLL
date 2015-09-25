@@ -76,8 +76,7 @@ var gamePadModule = (function() {
 	// Reveal public pointers to private functions and properties
 	return {
 		start: startPolling,
-		stop: stopPolling/*,
-		getInputs: function() { return gamepad; }*/
+		stop: stopPolling
 	};
 	
 })();
