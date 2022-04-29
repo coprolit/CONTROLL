@@ -16,7 +16,7 @@ https://chrome.google.com/webstore/detail/controll/hbnkhjacnbnobebofnlmkpokijcea
 ## App architecture
 It's all very simple:
 
-🎮 - gamepad.js - adapter.js - bluetooth.js - ⚪
+🎮 -> gamepad.js -> adapter.js -> bluetooth.js -> ⚪
 
 #### gamepad.js
 The gamepad module listen for gamepad controller inputs and broadcasts changes.
