@@ -16,13 +16,16 @@ https://chrome.google.com/webstore/detail/controll/hbnkhjacnbnobebofnlmkpokijcea
 ## App architecture
 It's all very simple:
 
-🎮 -> gamepad.js -> adapter.js -> bluetooth.js -> ⚪
+🎮 -> gamepad.js -> app.js -> adapter.js|bluetooth.js -> ⚪
 
 #### gamepad.js
-The gamepad module listen for gamepad controller inputs and broadcasts changes.
+The gamepad module polls for gamepad controller inputs and broadcasts changes.
+
+#### app.js
+App module acts as pub/sub broker (relaying gamepad changes to the adapter module).
 
 #### adapter.js
-The adapter module receives gamepad input, convert it to commands for Sphero ball and sends it via bluetooth module.  
+The adapter module receives gamepad input, converts it to commands for Sphero ball and sends it via bluetooth module.  
 
 #### bluetooth.js
 The bluetooth module keeps a socket connection to the Sphero and sends binary commands received from gamepad module.
